@@ -22,9 +22,14 @@ void SocketLoop() {
     // Marking the socket as passive; SOMAXCONN is the system call for max socket connections
     int listen_status = listen(original_socket, SOMAXCONN);
 
-    
+    // Mark as non blocking
+    int flags = fcntl(original_socket, F_GETFL, 0);
+    flags |= O_NONBLOCK;
 
     // registered with epoll instance
+    epoll_ctl(epoll_fd, )
+
+
     // Enter epoll loop
     // Wait for notification from epoll
     // accept() a new client socket
