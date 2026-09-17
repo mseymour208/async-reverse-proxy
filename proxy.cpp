@@ -6,7 +6,10 @@ void SocketLoop() {
     int epoll_fd = epoll_create1(0);
 
     // Create original socket configured for non-blocking operation
-    int original_socket = socket(AF_INET, SOCK_STREAM, O_NONBLOCK);
+    int original_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (original_socket < 0) {
+        // socket creation failure
+    }
     
     // Binding setup
     struct sockaddr_in sock_address = {0};
@@ -18,19 +21,30 @@ void SocketLoop() {
 
     // Binding socket to specific network address
     int bind_status = bind(original_socket, (struct sockaddr *)&sock_address, sizeof(sock_address));
+    if (bind_status < 0) {
+        // bind() failure
+    }
 
     // Marking the socket as passive; SOMAXCONN is the system call for max socket connections
     int listen_status = listen(original_socket, SOMAXCONN);
+    if (listen_status < 0) {
+        // listen() failure
+    }
 
     // Mark as non blocking
     int flags = fcntl(original_socket, F_GETFL, 0);
     flags |= O_NONBLOCK;
 
-    // registered with epoll instance
-    epoll_ctl(epoll_fd, )
-
+    // register original socket with epoll
+    struct epoll_event ev;   // ev structure is data carrier from user space -> linux kernel epoll engine
+    ev.events = EPOLLIN;  // What specific events to monitor (EPOLLIN : wake up thread whenever new data)
+    ev.data.fd = original_socket;  // Immediately hand exact data payload to original socket
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, original_socket, &ev) == -1) {
+        // epoll registration error
+    }
 
     // Enter epoll loop
+
     // Wait for notification from epoll
     // accept() a new client socket
     // extract file descriptor
