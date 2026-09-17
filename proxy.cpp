@@ -33,7 +33,13 @@ void SocketLoop() {
 
     // Mark as non blocking
     int flags = fcntl(original_socket, F_GETFL, 0);
+    if (flags == -1) {
+        // get flag error
+    }
     flags |= O_NONBLOCK;
+    if (fcntl(original_socket, F_SETFL, flags) == -1) {
+        // Set flag error
+    }
 
     // register original socket with epoll
     struct epoll_event ev;   // ev structure is data carrier from user space -> linux kernel epoll engine
@@ -44,6 +50,15 @@ void SocketLoop() {
     }
 
     // Enter epoll loop
+
+    // Event array structure
+    vector<struct epoll_event> event_vec(10);
+
+    // Polling block
+    while (true) {
+        int num_events = epoll_wait(epoll_fd, *event_vec, 10, -1)
+    }
+
 
     // Wait for notification from epoll
     // accept() a new client socket
