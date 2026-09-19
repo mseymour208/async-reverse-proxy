@@ -16,6 +16,7 @@ using namespace std;
 
 // initializing epoll and socket loop
 void SocketLoop();
+void set_socket(int fd, struct epoll_event ev, int ep_fd);
 
 
 

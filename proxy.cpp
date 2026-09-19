@@ -32,22 +32,12 @@ void SocketLoop() {
     }
 
     // Mark as non blocking
-    int flags = fcntl(original_socket, F_GETFL, 0);
-    if (flags == -1) {
-        // get flag error
-    }
-    flags |= O_NONBLOCK;
-    if (fcntl(original_socket, F_SETFL, flags) == -1) {
-        // Set flag error
-    }
+    
 
     // register original socket with epoll
     struct epoll_event ev;   // ev structure is data carrier from user space -> linux kernel epoll engine
     ev.events = EPOLLIN;  // What specific events to monitor (EPOLLIN : wake up thread whenever new data)
-    ev.data.fd = original_socket;  // Immediately hand exact data payload to original socket
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, original_socket, &ev) == -1) {
-        // epoll registration error
-    }
+    set_socket(original_socket, ev, epoll_fd);
 
     // Enter epoll loop
 
@@ -56,7 +46,14 @@ void SocketLoop() {
 
     // Polling block
     while (true) {
-        int num_events = epoll_wait(epoll_fd, *event_vec, 10, -1)
+        int num_events = epoll_wait(epoll_fd, event_vec.data(), 10, -1)
+        for (int i = 0; i < num_events; i++) {
+            if (event_vec[i].data.fd == original_socket) {
+                int client_socket = accept(original_socket, *sock_address, sock_address.length());
+                set_socket(client_socket, ev, epoll_fd);
+
+            }
+        }
     }
 
 
@@ -65,5 +62,23 @@ void SocketLoop() {
     // extract file descriptor
     // set to non blocking and register to epoll instance
 
+}
+
+void set_socket(int fd, struct epoll_event ev, int ep_fd) {
+    // Mark as non blocking
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags == -1) {
+        // get flag error
+    }
+    flags |= O_NONBLOCK;
+    if (fcntl(fd, F_SETFL, flags) == -1) {
+        // Set flag error
+    }
+
+    ev.data.fd = fd;
+    // Register socket with epoll
+    if (epoll_ctl(ep_fd, EPOLL_CTL_ADD, fd, &ev) == -1) {
+        // epoll registration error
+    }
 }
 
