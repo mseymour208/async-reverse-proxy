@@ -43,13 +43,16 @@ void SocketLoop() {
 
     // Event array structure
     vector<struct epoll_event> event_vec(10);
+    struct sockaddr_in client_addr = {0};
+
+    socklen_t client_addr_size = sizeof(client_addr);
 
     // Polling block
     while (true) {
-        int num_events = epoll_wait(epoll_fd, event_vec.data(), 10, -1)
+        int num_events = epoll_wait(epoll_fd, event_vec.data(), 10, -1);
         for (int i = 0; i < num_events; i++) {
             if (event_vec[i].data.fd == original_socket) {
-                int client_socket = accept(original_socket, *sock_address, sock_address.length());
+                int client_socket = accept(original_socket, (struct sockaddr *)&client_addr, &client_addr_size);
                 set_socket(client_socket, ev, epoll_fd);
 
             }
@@ -64,7 +67,7 @@ void SocketLoop() {
 
 }
 
-void set_socket(int fd, struct epoll_event ev, int ep_fd) {
+void set_socket(int fd, struct epoll_event &ev, int ep_fd) {
     // Mark as non blocking
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags == -1) {
