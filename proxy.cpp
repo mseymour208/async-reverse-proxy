@@ -1,6 +1,6 @@
 #include "proxy.h"
 
-void SocketLoop() {
+void socket_loop() {
 
     // Instantiate epoll instance
     int epoll_fd = epoll_create1(0);
@@ -59,6 +59,8 @@ void SocketLoop() {
                 // Non-blocking reads
                 int buffer[5] = {0, 0, 0, 0, 0}
                 ssize_t num_bytes = read(event_vec[i].data.fd, *buffer, 5)
+                
+
                 // Non-blocking socket condition
                 // Connection lifecycle management
 
