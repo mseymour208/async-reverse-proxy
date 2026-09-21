@@ -31,15 +31,10 @@ void SocketLoop() {
         // listen() failure
     }
 
-    // Mark as non blocking
-    
-
     // register original socket with epoll
     struct epoll_event ev;   // ev structure is data carrier from user space -> linux kernel epoll engine
     ev.events = EPOLLIN;  // What specific events to monitor (EPOLLIN : wake up thread whenever new data)
     set_socket(original_socket, ev, epoll_fd);
-
-    // Enter epoll loop
 
     // Event array structure
     vector<struct epoll_event> event_vec(10);
@@ -49,21 +44,27 @@ void SocketLoop() {
 
     // Polling block
     while (true) {
+        // Wait for notification from epoll
         int num_events = epoll_wait(epoll_fd, event_vec.data(), 10, -1);
         for (int i = 0; i < num_events; i++) {
+
             if (event_vec[i].data.fd == original_socket) {
+                // accept() a new client socket
                 int client_socket = accept(original_socket, (struct sockaddr *)&client_addr, &client_addr_size);
+
+                // set to non blocking and register to epoll instance
                 set_socket(client_socket, ev, epoll_fd);
+
+            } else {
+                // Non-blocking reads
+                int buffer[5] = {0, 0, 0, 0, 0}
+                ssize_t num_bytes = read(event_vec[i].data.fd, *buffer, 5)
+                // Non-blocking socket condition
+                // Connection lifecycle management
 
             }
         }
     }
-
-
-    // Wait for notification from epoll
-    // accept() a new client socket
-    // extract file descriptor
-    // set to non blocking and register to epoll instance
 
 }
 
