@@ -1,4 +1,5 @@
 #include "proxy.h"
+#include "chunked_array.h"
 
 void socket_loop() {
 
@@ -40,6 +41,9 @@ void socket_loop() {
     vector<struct epoll_event> event_vec(10);
     struct sockaddr_in client_addr = {0};
 
+    // Instantiate chunked array
+    chunked_array<Connection> storage;
+
     socklen_t client_addr_size = sizeof(client_addr);
 
     // Polling block
@@ -48,6 +52,7 @@ void socket_loop() {
         int num_events = epoll_wait(epoll_fd, event_vec.data(), 10, -1);
         for (int i = 0; i < num_events; i++) {
 
+            // NEW socket connection
             if (event_vec[i].data.fd == original_socket) {
                 // accept() a new client socket
                 int client_socket = accept(original_socket, (struct sockaddr *)&client_addr, &client_addr_size);
@@ -55,7 +60,18 @@ void socket_loop() {
                 // set to non blocking and register to epoll instance
                 set_socket(client_socket, ev, epoll_fd);
 
-            } else {
+                // Instantiate connection
+                Connection& new_socket{client_socket, ConnectionState::reading};
+
+                // Populate into chunked array
+                storage[client_socket].fd = client_socket;
+                storage[client_socket].state = ConnectionState::reading;
+                storage[client_socket].backend_fd = -1;
+
+
+            } 
+            // NOT a new socket connection
+            else {
                 // Non-blocking reads
                 int buffer[5] = {0, 0, 0, 0, 0}
                 ssize_t num_bytes = read(event_vec[i].data.fd, *buffer, 5)
