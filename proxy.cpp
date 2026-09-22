@@ -60,9 +60,6 @@ void socket_loop() {
                 // set to non blocking and register to epoll instance
                 set_socket(client_socket, ev, epoll_fd);
 
-                // Instantiate connection
-                Connection& new_socket{client_socket, ConnectionState::reading};
-
                 // Populate into chunked array
                 storage[client_socket].fd = client_socket;
                 storage[client_socket].state = ConnectionState::reading;
@@ -79,6 +76,7 @@ void socket_loop() {
                     // Socket is reading
                     Connection& active = storage[event_vec[i].data.fd];
                     char temp_buffer[4096];
+                    const char* terminator = "\r\n\r\n";
 
                     // Reading loop
                     while(1) {
@@ -97,6 +95,14 @@ void socket_loop() {
                         }
                         // Append our temp buffer to our read buffer
                         active.read_buffer.insert(active.read_buffer.end(), temp_buffer, temp_buffer + bytes_read);
+
+                        // Check if we recieved the full data
+                        auto it = search(active.read_buffer.begin(), active.read_buffer.end(), terminator, terminator + 4);
+                        if (it != active.read_buffer.end()) {
+                            cout << string str(active.read_buffer.begin(), active.read_buffer.end()) << endl;
+                        } else {
+                            cout << "No null terminator" << endl;
+                        }
                     }
                     
                 }

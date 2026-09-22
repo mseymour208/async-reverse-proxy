@@ -1,5 +1,6 @@
 #include "chunked_array.h"
 
+template <typename T, size_t chunk_size = 1028>
 void push_back(const T& fd) {
     // Where we allocate data
     int outer_idx = fd / chunk_size;
