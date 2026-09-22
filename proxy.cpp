@@ -95,14 +95,14 @@ void socket_loop() {
                         }
                         // Append our temp buffer to our read buffer
                         active.read_buffer.insert(active.read_buffer.end(), temp_buffer, temp_buffer + bytes_read);
-
-                        // Check if we recieved the full data
-                        auto it = search(active.read_buffer.begin(), active.read_buffer.end(), terminator, terminator + 4);
-                        if (it != active.read_buffer.end()) {
-                            cout << string str(active.read_buffer.begin(), active.read_buffer.end()) << endl;
-                        } else {
-                            cout << "No null terminator" << endl;
-                        }
+                    }
+                    // Check if we recieved the full data
+                    auto it = search(active.read_buffer.begin(), active.read_buffer.end(), terminator, terminator + 4);
+                    if (it != active.read_buffer.end()) {
+                        string str(active.read_buffer.begin(), active.read_buffer.end());
+                        cout << str << endl;
+                    } else {
+                        cout << "No null terminator" << endl;
                     }
                     
                 }
@@ -140,3 +140,7 @@ void set_socket(int fd, struct epoll_event &ev, int ep_fd) {
     }
 }
 
+int main() {
+    socket_loop();
+    return 0;
+}

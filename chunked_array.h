@@ -14,7 +14,6 @@ class chunked_array {
 
     public:
         chunked_array() = default;
-        void push_back(const T& fd);
         T& operator[](size_t index);
         const T& operator[](size_t index) const;
 };
