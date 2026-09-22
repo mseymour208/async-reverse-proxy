@@ -72,10 +72,40 @@ void socket_loop() {
             } 
             // NOT a new socket connection
             else {
-                // Non-blocking reads
-                int buffer[5] = {0, 0, 0, 0, 0}
-                ssize_t num_bytes = read(event_vec[i].data.fd, *buffer, 5)
-                
+                // Non-blocking reads                
+                uint32_t set_flags = event_vec[i].events;
+
+                if (set_flags & EPOLLIN) {
+                    // Socket is reading
+                    Connection& active = storage[event_vec[i].data.fd];
+                    char temp_buffer[4096];
+
+                    // Reading loop
+                    while(1) {
+                        // Read in data from the connected socket
+                        ssize_t bytes_read = read(event_vec[i].data.fd, temp_buffer, sizeof(temp_buffer));
+                        // If the socket gets blocked, break the loop
+                        if (bytes_read == -1) {
+                            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                                break;
+                            }
+                        }
+                        // Connected socket closed
+                        if (bytes_read == 0) {
+                            close(event_vec[i].data.fd);
+                            break;
+                        }
+                        // Append our temp buffer to our read buffer
+                        active.read_buffer.insert(active.read_buffer.end(), temp_buffer, temp_buffer + bytes_read);
+                    }
+                    
+                }
+                if (set_flags & EPOLLOUT) {
+                    // socket is writing
+                }
+                if (set_flags & (EPOLLERR | EPOLLHUP)) {
+                    // Socket disconnected/encountered an error
+                }
 
                 // Non-blocking socket condition
                 // Connection lifecycle management
